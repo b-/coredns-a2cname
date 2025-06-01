@@ -57,6 +57,7 @@ var Directives = []string{
 	"secondary",
 	"etcd",
 	"loop",
+	"coredns-a2cname",
 	"forward",
 	"grpc",
 	"erratic",
