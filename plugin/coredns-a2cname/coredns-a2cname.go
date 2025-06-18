@@ -75,11 +75,25 @@ func (i *IpToCname) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.M
 // Name returns the plugin name
 func (i *IpToCname) Name() string { return "coredns-a2cname" }
 
-// matchesZone checks if the query name matches any of our configured zones
+// matchesZone checks if the query name matches any of our configured zones, supporting wildcards
 func (i *IpToCname) matchesZone(qname string) bool {
+	qname = strings.ToLower(qname)
 	for _, zone := range i.Zones {
-		if strings.HasSuffix(strings.ToLower(qname), strings.ToLower(zone)) {
-			return true
+		zone = strings.ToLower(zone)
+		if strings.HasPrefix(zone, "*.") {
+			// Wildcard zone: *.example.com.
+			base := zone[2:]
+			if strings.HasSuffix(qname, base) && qname != base {
+				// Ensure it's not the base zone itself
+				if len(qname) > len(base) && qname[len(qname)-len(base)-1] == '.' {
+					return true
+				}
+			}
+		} else {
+			// Non-wildcard: exact suffix match
+			if strings.HasSuffix(qname, zone) {
+				return true
+			}
 		}
 	}
 	return false
